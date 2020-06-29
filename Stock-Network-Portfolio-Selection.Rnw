@@ -2,9 +2,22 @@
 \documentclass[techreport]{tbsi-thesis}
 
 %\usepackage{minted}
-\usepackage{float}   % add option [H] for floats
+%\usepackage{float}   % add option [H] for floats
 \usepackage{caption} % add \caption* option for table cations (as opposed to title)
 \usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+% Change bibiography page title to References
+\renewcommand{\bibname}{References}
+
+% Command for norm
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+
+% Define the portfolio selection problem
+\newtheorem{portfoliochoice}{Portfolio choice}
+\newtheorem{communicability}{Communicability Betweenness Centrality}
+
 
 \hypersetup{
   colorlinks=true,
@@ -17,7 +30,7 @@
 
 \title{Stock Network Investment \\ An Application to the Brazilian Stock Market}
 
-\author{David Cecchini (2019380040)\footnote{TBSI - Environmental Sciences and New Energy Technology}\\黄欣欣 (2019214661\footnote{TBSI - 精准医学与公共健康}}
+\author{David Cecchini\footnote{TBSI - Environmental Sciences and New Energy Technology - 2019380040}, 黄欣欣\footnote{TBSI - 精准医学与公共健康 - 2019214661}}
 
 \collegeshield{images/TBSI}
 
@@ -28,9 +41,9 @@
 %\subjectline{Optimization and Simulation}
 \keywordsEN{quantitative investments; portfolio selection; stock networks; Brazilian stocks}
 
-\abstractEN{%
-  this is an abstract.
-}
+%\abstractEN{%
+%  this is an abstract.
+%}
 
 
 %% PDF meta-info:
@@ -86,9 +99,9 @@ investment_capital = 10000
 
 \chapter{Background}
 
-\section{Brazil Stock Exchange and Over-the-Counter Market - B3}
+\section{Brazil Stock Exchange and Over-the-Counter Market}
 
-\emph{Brasil, Bolsa, Balcão - B3} (Brazil, Exchange, Counter) is the biggest Brazilian exchange among the top exchanges by market cap in the world, ranking number 18\footnote{\url{https://en.wikipedia.org/wiki/List_of_stock_exchanges}}, with BRL 4 billion in capitalization (approximately USD 660 billion, value that changes considerably due to fluctuations of dollar to Brazilian real conversion rates) and 330 listed companies.
+\emph{Brasil, Bolsa, Balcão - B3} (Brazil, Exchange, Counter)\footnote{\url{http://www.b3.com.br}} is the biggest Brazilian exchange among the top exchanges by market cap in the world, ranking number 18\footnote{\url{https://en.wikipedia.org/wiki/List_of_stock_exchanges}}, with BRL 4 billion in capitalization (approximately USD 660 billion, value that changes considerably due to fluctuations of dollar to Brazilian real conversion rates) and 330 listed companies.
 
 \emph{B3} is a fusion of traditional exchanges in Brazil (Sao Paulo Stock Exchange, Rio Stock Exchange, Brazilian Mercantile and Futures Exchange - BM\&F) and \emph{CETIP} (Central of Custody and Financial Settlement of Securities) to form the unified Brazilian exchange.
 
@@ -101,7 +114,7 @@ Based on the assumption that the traders’ irrational decisions can cause mispr
 
 Portfolio selection is an important part of the investor’s decisions since there are many different assets to invest in, each one with different expected returns and different risks. Modern Portfolio Theory (MPT)\footnote{\url{ https://en.wikipedia.org/wiki/Modern_portfolio_theory}} uses a mathematical approach to select stocks based on the duality \emph{Risk-Return}. The MPT was introduced by the Nobel prize Harry Markowitz\cite{Markowitz1952}, where he introduces the concept of diversification that allows a portfolio to obtain similar or higher returns with less risk by adding assets to it.
 
-In this project, we implement a portfolio selection strategy based on a stock network\cite{Tse2010}. The strategy is similar to MPT in the sense that it assess the portfolio risk-return and select the stocks that minimize the risk, and by doing so we would obtain better returns.
+In this project, we implement a portfolio selection strategy based on a stock network\cite{Tse2010}. The strategy is similar to MPT in the sense that it assesses the portfolio risk-return and selects the stocks that minimize the risk, and by doing so we would obtain better returns.
 
 \section{Trading premises}
 
@@ -114,30 +127,71 @@ Since March 30, 2017, the Brazilian stock market is unified at \emph{B3}. Before
 
 \section{Description}
 
-Fluctuations of stock prices are not independent but are highly inter-coupled with strong correlations with the business sectors and industries to which the stocks belong. The usual approach involves a procedure of finding a correlation between each pair of time series of stock prices, and a subsequent procedure of constructing a network that connects the individual stocks based on the levels of correlation. In much of the previous work, networks of relatively small size were constructed, and specific filtering processes were applied to further reduce the complexity.
+Stock prices have a complex dynamics and their movements depend on many factors from economic, financial, and behavioral aspects of the market and it's agents. Our strategy aims to identify correlations between stocks and select the best for a long term investment. In short, we will use a special kind of correlation metric that is suitable for time series and build a network by connecting the stocks based on their "loss-spreading factor" (how the stocks are correlated, and to how many other stocks they are correlated).
 
-Distance correlation\cite{Szekely2007} is a correlation measure that capture both linear and non-linear relations in the data. From its definition, it also allows time series with different length to be compared. Financial time series forecasting is a very complex problem, and Pearson's correlation may not be appropriate to measure the dependencies between the stocks because it detect only linear realtions, not to mention that it can have value equal to zero when the sereis are dependent\cite{Szekely2007}.
+Financial time series forecasting is a very complex problem, and Pearson's correlation may not be appropriate to measure the dependencies between the stocks because it detects only linear relations, not to mention that it can have a value equal to zero when the series are dependent\cite{Szekely2007}. We will use the Distance Correlation metric\cite{Szekely2007, Szekely2009}, which is a correlation measure that captures both linear and non-linear relations in the data. From its definition, it also allows time series with different dimmension to be compared but we will study only stocks in the same period in this study. According to \cite{Szekely2007}, the distance covariance is defined as: Let $X, Y$ be two real-valued random variables (vectors) and $(X_1, Y_1), \ldots, (X_n, Y_n)$ be a n-size sample. Then, we first compute the pairwise distances for all $j,k \in \{1, \ldots, n\}$:
 
-Because the distance correlation can be applied to time series of different length, it is a good choice for online applications where each stock series may have different lengths of their historical data, as well as more recently listed companies would also be ready to be added to the analysis.
+\begin{align}
+a_{j,k} &= \norm{X_j - X_k}\\
+b_{j,k} &= \norm{Y_j - Y_k}
+\end{align}
+
+Then, define the matrices:
+
+\begin{align}
+A_{j,k} = a_{j,k} - \bar{a}_{j,\cdot} - \bar{a}_{\cdot,k} + \bar{a}_{\cdot,\cdot}\\
+B_{j,k} = b_{j,k} - \bar{b}_{j,\cdot} - \bar{b}_{\cdot,k} + \bar{b}_{\cdot,\cdot}
+\end{align}
+
+where $\bar{a}_{\cdot,k}$ is the $k$-th columns mean, $\bar{a}_{j,\cdot}$ is the $j$-th row mean and $\bar{a}_{\cdot,\cdot}$ is the total mean. Same notation for matrix $B$. Then, the distance covariance is defined by:
+
+\begin{equation}
+  dCov_n^2(X,Y) := \frac{1}{n^2} \sum_{j=1}^{n}\sum_{k=1}^{n}A_{j,k}B_{j,k}
+\end{equation}
+
+And the correlation, as usual, is defined by:
+
+\begin{equation}
+  dCor(X,Y) := \frac{dCov(X,Y)}{\sqrt{dCov(X,X) dCov{Y,Y}}}
+\end{equation}
 
 With the distance correlation between all assets computed, we can define our weighted stock network using the winner-take-all method \cite{Tse2010}. This method defines the edges weight matrix using a threshold value $\rho_c$. We want this hyperparameter to be "big enough" (we want to limit the number of connections between low correlated stocks) but at the same time not too big so that the graph remains irreducible (fully connected). The final correlation matrix of the network is given by:
 
 \begin{align}
 Cor_{ij} =
   \begin{cases}
-    \rho_{D}(X_{i}, Y_{j}), & \rho \geq \rho_{c} \\
+    \rho_{D}(X_{i}, Y_{j}), & \rho_D \leq \rho_{c} \\
     0, & \text{otherwise}.
   \end{cases}
 \end{align}
 
 where $\rho_D(X_i, Y_j)$ is the distance correlation between time series $X_i$ and $Y_j$.
 
+The next step is to create the stock network. For this, we want to represent the stocks with weights that are inversely proportional to the distance correlation. Thus, we use $1-Cor_{ij} \in [0, 1]$ as the similarity matrix that will generate the network weights.
+
+Our strategy will use network theory to identify portfolios that have the minimal systemic risk. Thus, we define our strategy as:
+
+
+\begin{portfoliochoice}
+Given a set of assets $\mathbf{S}$ containing $N$ stocks, we want to find weights $\mathbf{w} \in [0, 1]^N$ such that $w_i$ is bigger if the corresponding stock has low systemic risk and $w_i$ is smaller if the corresponding stock has high systemic risk.
+\end{portfoliochoice}
+
+Our systemic risk measurement is described next.
 
 \section{Risk management}
 
-Our strategy aims to identify portfolios with minimal risk, so that out investment may obtain higher returns without being exposed to higher risks. Instead of using the variance as main indicator of portfolio risk, in our strategy we use network theory to assess the portfolio risk taking into account the systemic risk (the spread of losses due to correlation between stocks).
+Our strategy aims to identify portfolios with minimal risk, so that our investment may obtain higher returns without being exposed to higher risks. Instead of using the variance as the main indicator of portfolio risk, in our strategy, we use network theory to assess the portfolio risk taking into account the systemic risk (the spread of losses due to correlation between stocks).
 
-We use the the \emph{Communicability Betweenness Centrality}\cite{Estrada2009} of the network to measure the portfolio risk. This measure is defined for each node as a fraction between the walks passing through this node and all the possible paths in the newtwork. The more connetions the node has, the higher its communicability betweenness score. Also, the higher the score, the more the node spread its impacts.
+We build our network, as described in the previous section, with the similarity matrix defined as $1-Cor_{ij}$. This defined the distance between the nodes in the network. Since we adopted the \emph{Winners-Take-All}\cite{Tse2010} method to control how our stock network is connected, we limited the node distance to a certain threshold of $\rho_c$. Then, we use the \emph{Communicability Betweenness Centrality}\cite{Estrada2009} of the network to measure the portfolio risk. This measure is defined for each node as a fraction between the walks passing through this node and all the possible paths in the network. The more connections the node has the higher its communicability betweenness score. Also, the higher the score, the more the node is capable of spreading its impacts. Formally, following \cite{Estrada2009}:
+
+\begin{communicability}
+Let $G = (V, E)$ be a graph with $n$ nodes and $m$ edges with adjancency matrix $A$. Define $G(r) = (V, E')$ the graph constructed by removing all edges that connect to the node $r$, keeping the node itself. Let $G_{prq}$ represent the number of paths between nodes $p$ and $q$ that passes through the node $r$ and $G_{pq}$ be all possible paths between $p$ and $q$. Then, the communicability betweenness centrality is defined by:
+
+\begin{equation}
+  \omega_r = \frac{1}{(n-1)(n-2)}\sum_p \sum_q \dfrac{G_{prq}}{G_{pq}}
+\end{equation}
+\end{communicability}
+
 
 In our strategy, we want to allocate our capital inversely proportional to the risk of the stock.
 
@@ -157,7 +211,7 @@ The stock market is regulated by CVM but is operated by the stock exchange \emph
   \label{fig:B3hist}
 \end{figure}
 
-We collected historical data from 2013 to May 2020. The data contain the trafding Day, Open, Close, Low, and High prices and the Volume traded for each trading day.
+We collected historical data from 2013 to May 2020. The data contain the trading Day, Open, Close, Low, and High prices and the Volume traded for each trading day.
 
 \begin{table}[H]
   \centering
@@ -172,13 +226,12 @@ We collected historical data from 2013 to May 2020. The data contain the trafdin
   \caption*{The collected data for the prices time series contains six columns: Day represents the time date of the series, Open, Close, High, and Low are, respectively, the prices when the trading start, ends, the highest and lowest prices in the day and Volume corresponds to the traded amount in the day.}
 \end{table}
 
-
 \subsection{Pre-selection of stocks}
 
 We collected the historical data for all 330 companies, which may have more than one listing (for example, \emph{Banco Itaú} have the preferred - ITUB3 and ordinary - ITUB4 stocks listed). So, we defined the following criteria to pre-select the stocks that would be added to our analysis:
 
 \begin{enumerate}
-  \item Select only stocks that have a minimum liquidity. We want our strategy to be freely available to trade the stocks on the portfolio, without incurring in liquidity risk. In this direction, we defined a threshold of average BRL 5.000,00 volume. We exclude most of the stocks in this selection, with $124$ remaining.
+  \item Select only stocks that have minimum liquidity. We want our strategy to be freely available to trade the stocks on the portfolio, without incurring in liquidity risk. In this direction, we defined a threshold of average BRL 5.000,00 volume. We exclude most of the stocks in this selection, with $124$ remaining.
   \item Select only one type of stock per company. This allows us to remove highly correlated stocks because they are from the same company. With exclude 5 additional stocks with this criteria: \emph{BBDC3}, \emph{CMIG3}, \emph{ITUB3}, \emph{LAME3}, and \emph{PETR3}.
   \item We remove stocks with too many missing values.
   \item We remove stocks that aren't connected (using $\rho_c = 0.4$) in the network.
@@ -202,7 +255,7 @@ For $\rho_c=0.325$, the network still keeps too many connections, as seen on \re
   \label{fig:HClose0325}
 \end{figure}
 
-Finally, for a $\rho=0.4$ we observe that we remove some of the connections and can observe different relations between the stocks. The network can be seen on \ref{fig:HClose04}.
+Finally, for $\rho=0.4$ we observe that we remove some of the connections and can observe different relations between the stocks. The network can be seen on \ref{fig:HClose04}.
 
 \begin{figure}[H]
   \centering
@@ -211,11 +264,11 @@ Finally, for a $\rho=0.4$ we observe that we remove some of the connections and 
   \label{fig:HClose04}
 \end{figure}
 
-After we applied the above criteria to our stocks, we ended up it a total of $40$ assets that will possible be part of our portfolio.
+After we applied the above criteria to our stocks, we ended up it a total of $40$ assets that will possibly be part of our portfolio.
 
 \subsection{Data transformation}
 
-As described above, we use the time series of the $40$ stocks to build a distance correlation matrix:
+As described above, we use the time series of the $40$ stocks to build a distance correlation matrix. We used the \emph{Python} package \emph{dcor}\footnote{\url{https://dcor.readthedocs.io/en/latest/index.html}}, and obtained the distance matrix between all stocks:
 
 \begin{table}[H]
   \centering
@@ -228,7 +281,7 @@ As described above, we use the time series of the $40$ stocks to build a distanc
   \caption*{The total distance matrix is of dimension $40\times40$.}
 \end{table}
 
-Then we build the stock network using the final threshold of $\rho_c=0.4$. As seen on on \ref{fig:DegreeHist}, the stocks on this network has an average degree (number of connections) of $9$, and its distribution is skewed right.
+Then we build the stock network using the threshold of $\rho_c=0.4$. As seen on \ref{fig:DegreeHist}, the stocks on this network has an average degree (number of connections) of $9$, and its distribution is skewed right.
 
 \begin{figure}[H]
   \centering
@@ -243,7 +296,7 @@ With the network built, we can start working on our strategy.
 
 \subsection{Minimal Risk Portfolio}
 
-Similar to the theory of portfolio optimization, we are intrested in finding a portfolio with minimum risk. we will call this strategy the Minimal Risk Portfolio (MRP). To this strategy, we start by computing the intra-porfolio risk, so that we can make investments decisions that invest less capital in riskier stocks. To compute the portfolio risk, as mentioned before, we use the \emph{communicability betweenness centrality} measure. We can observe the portfolio risk at \ref{fig:PortfolioRisk}.
+Similar to the theory of portfolio optimization, we are interested in finding a portfolio with minimum risk. we will call this strategy the Minimal Risk Portfolio (MRP). To this strategy, we start by computing the intra-portfolio risk, so that we can make investment decisions that invest less capital in riskier stocks. To compute the portfolio risk, as mentioned before, we use the \emph{communicability betweenness centrality} measure. We can observe the portfolio risk at \ref{fig:PortfolioRisk}.
 
 \begin{figure}[H]
   \centering
@@ -252,15 +305,14 @@ Similar to the theory of portfolio optimization, we are intrested in finding a p
   \label{fig:PortfolioRisk}
 \end{figure}
 
-We read an intraportfolio risk plot like this: \emph{VALE3} (\emph{Companhia Vale do Rio Doce}) is $\dfrac{0.41}{0.07} = 5.86$ times riskier than \emph{GGBR4} (\emph{Gerdau}), \emph{BBDC4} (\emph{Banco Bradesco}) is $\dfrac{8.33}{1.65} = 5.05$ times riskier than \emph{RENT3} (\emph{Localiza}), ... , and \emph{ITSA4} (\emph{Itaú S.A.}) is $\dfrac{8.59}{0.16} = 53.69$ times riskier than \emph{EMBR3} (\emph{Embraer})!
-
+We read an intra-portfolio risk plot like this: \emph{VALE3} (\emph{Companhia Vale do Rio Doce}) is $\dfrac{0.41}{0.07} = 5.86$ times riskier than \emph{GGBR4} (\emph{Gerdau}), \emph{BBDC4} (\emph{Banco Bradesco}) is $\dfrac{8.33}{1.65} = 5.05$ times riskier than \emph{RENT3} (\emph{Localiza}), ... , and \emph{ITSA4} (\emph{Itaú S.A.}) is $\dfrac{8.59}{0.16} = 53.69$ times riskier than \emph{EMBR3} (\emph{Embraer})!
 
 With this strategy, stocks that are more connected to others (more central in the netork) have the highest susception to impacts. Thus, we will invest the capital based on the inverse of the risk. We will also use a \emph{softmax} function to smoothen the distribution and avoid investing too big a share in the least risky stock. We used a \emph{temperature} value of $1.5$:
 
 \begin{align}
-  \text{w}_{r} &= \dfrac{1}{\omega_{r} \sum_{r'}\omega_{r'}^{-1}}\\
-  e_r &= e^{\frac{ln(\text{w}_{r})}{\text{temp}}}\\
-  \text{w}_{rs} &= \dfrac{e_r}{\sum_{r'}e_{r'}}
+  \text{w'}_{r} &= \dfrac{1}{\omega_{r} \sum_{r'}\omega_{r'}^{-1}}\\
+  e_r &= e^{\frac{ln(\text{w'}_{r})}{\text{temp}}}\\
+  \text{w}_{r} &= \dfrac{e_r}{\sum_{r'}e_{r'}}
 \end{align}
 
 And we obtain the following distribution for a USD 10,000.00 initial capital investment:
@@ -268,23 +320,23 @@ And we obtain the following distribution for a USD 10,000.00 initial capital inv
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\linewidth, keepaspectratio]{images/PortfolioAllocation.png}
-  \caption{Intra-portfolio risk}
+  \caption{Portfolio allocation based on intra-portfolio risk}
   \label{fig:PortfolioAllocation}
 \end{figure}
 
-We observe that with this strategy, around 35\% of the initial capital will be invested in one stock. This might seem counterintuitive since the idea is to diversify the portfolio, but according to the risk analysis, this stock is the least prone to financial impacts based on the trainig data.
+We observe that with this strategy, around 35\% of the initial capital will be invested in one stock. This might seem counterintuitive since the idea is to diversify the portfolio, but according to the risk analysis, this stock is the least prone to financial impacts based on the training data.
 
 \subsection{Maximal Independent Set}
 
-Another strategy based on network analysis is the Maximal Independent Set (MIS)\footnote{\url{https://en.wikipedia.org/wiki/Maximal_independent_set}}. This strategy selects the non-adjecent stocks that are the most representative in the network, in such a way that the network remain connected by the selected stocks (they form a dominatig set\footnote{\url{https://en.wikipedia.org/wiki/Dominating_set}}).
+Another strategy based on network analysis is the Maximal Independent Set (MIS)\footnote{\url{https://en.wikipedia.org/wiki/Maximal_independent_set}}. This strategy selects the non-adjacent stocks that are the most representative in the network, in such a way that the network remains connected by the selected stocks (they form a dominating set\footnote{\url{https://en.wikipedia.org/wiki/Dominating_set}}).
 
-Since the number of independent sets can be very large, instead of finding all the independent sets in order to find the biggest one (the MIS), we simulate $500$ randomly selected independet sets, and from this sample we select the maximum one.
+Since the number of independent sets can be very large, instead of finding all the independent sets in order to find the biggest one (the MIS), we simulate $500$ randomly selected independent sets, and from this sample, we select the maximum one.
 
 \section{Backtesting}
 
-In this section, we will execute our strategy on the historical data. We divided the data into training (used for fitting the network) and validation (used for backtesting). The training data contains the time series from 2013-01-02 to 2016-12-29, and the validation set contains data from 2017-01-02 to 2020-05-29.
+In this section, we will execute our strategy on historical data. We divided the data into training (used for fitting the network) and validation (used for backtesting). The training data contains the time series from 2013-01-02 to 2016-12-29, and the validation set contains data from 2017-01-02 to 2020-05-29.
 
-Based on the portfolio risk fitted on the trainig set, we assume that we make our investment on the last day of the training data, and compare our strategy with traditional ones. We will compare the results of the following strategies:
+Based on the portfolio risk fitted on the training set, we assume that we make our investment on the last day of the training data, and compare our strategy with traditional ones. We will compare the results of the following strategies:
 
 \begin{itemize}
   \item Minimal risk portfolio (MRP) (seen above)
@@ -296,7 +348,7 @@ We will also compare the returns of these strategies with the historical returns
 
 \begin{itemize}
   \item \emph{Ibovespa}: The benchmark index for the Brazilian market, representing the biggest companies listed on \emph{B3} (currently contains $77$ companies);
-  \item \emph{SMLL index}: Index containg the the smaller companies (small cap) (currently contains $90$ companies)
+  \item \emph{SMLL index}: Index containg the smaller companies (small cap) (currently contains $90$ companies)
 \end{itemize}
 
 We have continuous allocation shares for the strategies, and we will use a discrete allocation methodology contained in the \emph{Python} package \emph{pypfopt}\footnote{\url{https://github.com/robertmartin8/PyPortfolioOpt}}. The MRP obtain the following shares distribution:
@@ -313,7 +365,7 @@ We have continuous allocation shares for the strategies, and we will use a discr
 \end{table}
 
 
-The the MIS has this one:
+The MIS strategy will invest as below:
 
 \begin{table}[H]
   \centering
@@ -341,7 +393,7 @@ And the EF this one:
   \caption*{By allocating multiples of the shares, we obtained the distribution shown above for the EF portfolio. The total invested capital was $9,986.05$.}
 \end{table}
 
-By investing on these portfolios, we can measure the performance in the validation period. The return evolution can be seen on \ref{fig:TestReturnCovid}.
+By investing in these portfolios, we can measure the performance in the validation period. The return evolution can be seen on \ref{fig:TestReturnCovid}.
 
 \begin{figure}[H]
   \centering
@@ -350,15 +402,16 @@ By investing on these portfolios, we can measure the performance in the validati
   \label{fig:TestReturnCovid}
 \end{figure}
 
-Pictured above are the daily returns for MIS (solid green curve), MRP (solid blue curve), and the Efficient Frontier (solid red curve) portfolios from January 2017 to May 2020. The color-coded dashed curves represent the 20 day rolling averages of the respective portfolios.
+Pictured above are the daily returns for MIS (solid green curve), MRP (solid blue curve), and the Efficient Frontier (solid red curve) portfolios from January 2017 to May 2020. The color-coded dashed curves represent the 20-day rolling averages of the respective portfolios.
 
 We can observe the following:
 
-1. Efficient frontier has a much lower performance in the period;
-2. MRP and MIS portfolios have similar dynamics;
-3. The results from MRP and MIS suggests that these approaches have good performs; and
-4. We want to remark that the Brazilian market was not too stable in the recent years due to uncertainties in the political, economic, and social perspectives.
-
+\begin{enumerate}
+  \item Efficient frontier has a much lower performance in the period;
+  \item MRP and MIS portfolios have similar dynamics;
+  \item The results from MRP and MIS suggests that these approaches have good performs; and
+  \item We want to remark that the Brazilian market was not too stable in recent years due to uncertainties in the political, economic, and social perspectives.
+\end{enumerate}
 Next, let's observe the annual returns for each portfolio and compare them with the market.
 
 
@@ -396,7 +449,7 @@ From this image, we note:
 \begin{enumerate}
   \item the MRP and MIS portfolios have significantly smaller drawdowns than the Efficient Frontier portfolio;
   \item All portfolios have roughly the same maximum drawdown (around 40-45\%) achieved in the \emph{COVID-19} crisis period; and
-  \item MRP rolling maximum drawdowns are, on average, less pronounced than MIS. These results suggest the communicability betweenness centrality has predictive power as a measure of relative or intra portfolio risk, and more generally, that network-based portfolio construction is a promising alternative to the more radiational approaches like MPT.
+  \item MRP rolling maximum drawdowns are, on average, less pronounced than MIS. These results suggest the communicability betweenness centrality has predictive power as a measure of relative or intra-portfolio risk, and more generally, that network-based portfolio construction is a promising alternative to the more radiational approaches like MPT.
 \end{enumerate}
 
 
@@ -416,29 +469,30 @@ Finally, we can compare the performance metrics for the three portfolios:
 \end{table}
 
 
-MRP and MIS outperformed the Efficient Froniter on every metric. These results suggests that our strategy has has potential to be used in a real-world investment.
+MRP and MIS outperformed the Efficient Frontier on every metric. These results suggest that our strategy has the potential to be used in a real-world investment.
 
 
 \chapter{Conclusion}
 
-\section{Analyze backtesting performance and re-analyze whether the original strategy design is completed}
+\section{Conclusion remarks}
 
 We designed an algorithm to generate minimum risk portfolio (MRP) asset weights using tools from network science. First, an asset-related statistic is established, and then an appropriate centrality measure is used to extract the asset weight. As an intermediate step, we interpret the centrality score as a measure of relative risk because it captures asset volatility and their impact on the other assets in the network.
 
-In addition, we designed a second strategy by allocating the capital by Maximal Independent Set (MIS). This strategy finds the subset of stocks that guarantee sll the stocks in the network are conneceted. They are the most representative stocks.
+In addition, we designed a second strategy by allocating the capital by Maximal Independent Set (MIS). This strategy finds the subset of stocks that guarantee all the stocks in the network are connected. They are the most representative stocks.
 
-Our strategies were compared with the Modern Portfolio Theory porfolio given by the Efficient Frontier (EF) method.
+Our strategies were compared with the Modern Portfolio Theory portfolio given by the Efficient Frontier (EF) method.
 
-The portfolios were are assessed by cumulative return, rate of return, volatility, maximum withdrawal, risk-adjusted return and risk-adjusted-performance. In all performance indicators, Hedgecra ȅ algorithm is significantly better than the Efficient frontier of the portfolio and market.
-
+The portfolios were being assessed by cumulative return, rate of return, volatility, maximum withdrawal, risk-adjusted return and risk-adjusted-performance. In all performance indicators, Hedgecra ȅ algorithm is significantly better than the Efficient frontier of the portfolio and market.
 
 \section{Future work}
 
-Our model estimates parameters of the network based on the historical data of the training set. The use of the network betweeness centrality measure proved to be effective for minimizing the portfolio risk. Unfortunately, these dependency relations between the assets are not constant in time (the series are not stationary)\cite{Kenett2012, Hommes2002} and our model fail to adapt dynamically for different periods, specially for crisis-non crisis periods when the assets' correlations can vary significantly.
+Our model estimates parameters of the network based on the historical data of the training set. The use of the network betweenness centrality measure proved to be effective for minimizing the portfolio risk. Unfortunately, these dependency relations between the assets are not constant in time (the series are not stationary)\cite{Kenett2012, Hommes2002} and our model fails to adapt dynamically for different periods, especially for crisis-non crisis periods when the assets' correlations can vary significantly.
 
-To extend our model, we can make use of advanced random processes techniques such Bayesian sampler (for example, the \emph{No-U-Turn Sampler}\cite{hoffman2011nouturn} or Sequential Monte Carlo \cite{Doucet2009}) to model our strategies parameters. These techniques can be extended to be estimate time-varying parameteres taht could further improve the performance of the model in different periods.
+To extend our model, we can make use of advanced random processes techniques such as Bayesian sampler (for example, the \emph{No-U-Turn Sampler}\cite{hoffman2011nouturn} or Sequential Monte Carlo \cite{Doucet2009}) to model our strategies parameters. These techniques can be extended to estimate time-varying parameters that could further improve the performance of the model in different periods.
 
-Another approach would be to implement Copula\footnote{\url{https://en.wikipedia.org/wiki/Copula_(probability_theory)}} in our network, so we could model the dependency between the stock as a non-linear function that changes over time. Some new researches show results in this direction, for example \cite{Chatzis2012, Kenourgios2011, Oh2018}.
+Another approach would be to implement Copula\footnote{\url{https://en.wikipedia.org/wiki/Copula_(probability_theory)}} in our network, so we could model the dependency between the stock as a non-linear function that changes over time. Some new researches show results in this direction, for example, \cite{Chatzis2012, Kenourgios2011, Oh2018}.
+
+Finally, because the distance correlation can be applied to time series of different lengths, it would be a good choice for online applications where each stock series may have different lengths of their historical data, as well as more recently listed companies would also be ready to be added to the analysis. We want to extend our strategy to dynamically re-evaluate the portfolio periodically by updating the network when new information is available and possible change the portfolio weights and composition through time.
 
 
 
@@ -447,7 +501,7 @@ Another approach would be to implement Copula\footnote{\url{https://en.wikipedia
 %%
 \cleardoublepage
 \phantomsection
-\addcontentsline{toc}{chapter}{Bibliography}
+\addcontentsline{toc}{chapter}{References}
 \nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{bibliography}

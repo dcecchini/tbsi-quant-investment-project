@@ -837,7 +837,7 @@ def portfolio_growth_risk(avg_annual_returns, max_daily_rolling_drawdown):
 
 def collect_results(model):
 
-    if model == 'hedgecraft':
+    if model == 'MRP':
 
         collection = [[], [], []]
 
@@ -866,7 +866,7 @@ def collect_results(model):
 
         return collection
 
-    if model == 'hedgecraft_mis':
+    if model == 'MIS':
 
         collection = [[], [], []]
 
@@ -884,6 +884,40 @@ def collect_results(model):
 
         return collection
 
+
+# function to plot many overlaping kde plots
+def multi_distplot(rdist1, rdist2, rdist3, kde=True):
+
+    # initializes figure and axis
+    fig = plt.figure(figsize=(12,5))
+    ax = fig.add_subplot(111)
+
+    # pretty seaborn kde plots for each model
+    sns.distplot(rdist1, bins=12, kde=bool)
+    sns.distplot(rdist2, bins=10, kde=bool)
+    sns.distplot(rdist3, bins=12, kde=bool)
+
+    # gets xticks
+    vals1 = ax.get_xticks()
+
+    # reformats xticks to pcts
+    ax.set_xticklabels(['{:.0f}%'.format(x) for x in vals1])
+
+    # plot labels and title
+    ax.set_ylabel('Probability')
+    ax.set_xlabel('Returns')
+    plt.title('Distribution of Returns')
+
+    # removes spines
+    sns.despine(top=True, right=True)
+
+    # sets legend patches color and labels
+    ef_patch = mpatches.Patch(color='darksalmon', label='Efficient Frontier', alpha=0.5)
+    patch = mpatches.Patch(color='royalblue', label='Hedgecraft', alpha=0.5)
+    mis_patch = mpatches.Patch(color='seagreen', label='Hedgecraft MIS', alpha=0.5)
+
+    # turns legend on with patches
+    plt.legend(handles=[ef_patch, patch, mis_patch])
 
 # Avoid running any code here when importing
 if __name__ == "__main__":

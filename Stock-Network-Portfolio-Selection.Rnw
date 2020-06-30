@@ -112,7 +112,9 @@ Behavioral economics theory studies the limit from rational and irrational decis
 
 Based on the assumption that the traders’ irrational decisions can cause mispricing to financial assets, investors can design trading strategies that take advantage of the mispriced assets and invest according to the real (fair) price to guarantee a positive return on investments. This kind of investment strategy is called financial behavioral investment.
 
-Portfolio selection is an important part of the investor’s decisions since there are many different assets to invest in, each one with different expected returns and different risks. Modern Portfolio Theory (MPT)\footnote{\url{ https://en.wikipedia.org/wiki/Modern_portfolio_theory}} uses a mathematical approach to select stocks based on the duality \emph{Risk-Return}. The MPT was introduced by the Nobel prize Harry Markowitz\cite{Markowitz1952}, where he introduces the concept of diversification that allows a portfolio to obtain similar or higher returns with less risk by adding assets to it. MPT is about how risk-averse investors construct portfolios that offer the maximum expected return (the margin of high risk) at a given level of risk and assumes that investors are risk-averse and prefer a portfolio with less risk in the case of a certain return. Only when they expect more return will they be willing to take more risk.
+Portfolio selection is an important part of the investor’s decisions since there are many different assets to invest in, each one with different expected returns and different risks. Modern Portfolio Theory (MPT)\footnote{\url{ https://en.wikipedia.org/wiki/Modern_portfolio_theory}} uses a mathematical approach to select stocks based on the duality \emph{Risk-Return}. The MPT was introduced by the Nobel prize Harry Markowitz\cite{Markowitz1952}, where he introduces the concept of diversification that allows a portfolio to obtain similar or higher returns with less risk by adding assets to it.
+
+MPT is a theory of how risk-averse investors construct portfolios based on a certain level of market risk to achieve optimal or maximized expected returns, emphasizing that risk is an intrinsic component of high returns. It assumes that investors are risk-averse and prefer a portfolio with less risk in the case of a certain return. Only when they expect more return will they be willing to take more risks and shows that investors can build a multi-asset portfolio that will get the maximum return at a given risk level.
 
 In addition to rational investors, the market also includes irrational and high-risk investors, who may influence the market price, and they cannot have unlimited access to credit. Therefore, the hypothesis of the theory is not fully established, and the effective boundary theory and modern portfolio theory have certain limitations. When asset returns are normally distributed, they do not correctly represent realistic assumptions.
 
@@ -122,16 +124,16 @@ In this project, we implement a portfolio selection strategy based on a stock ne
 
 In Brazil, securities are processed \emph{B3} and regulated by the Securities Commission of Brazil (CVM) that is independent but directly linked with the Brazilian Ministry of Finance. It regulates markets such as the stock exchange, financial intermediaries, and public companies.
 
-Since March 30, 2017, the Brazilian stock market is unified at \emph{B3}. Before that, most of the companies were listed at the Sao Paulo Stock Exchange (\emph{Bovespa}). The transaction premise has not changed during the period of this strategy, and it can be expected that the transaction premise of Brazil's financial market will not change in the short term.
+Since March 30, 2017, the Brazilian stock market is unified at \emph{B3}. Before that, most of the companies were listed on the Sao Paulo Stock Exchange (\emph{Bovespa}). The transaction premise has not changed during the period of this strategy, and it can be expected that the transaction premise of Brazil's financial market will not change in the short term.
 
 
 \chapter{The strategy}
 
 \section{Description}
 
-Stock prices have a complex dynamics and their movements depend on many factors from economic, financial, and behavioral aspects of the market and it's agents. Our strategy aims to identify correlations between stocks and select the best for a long term investment. In short, we will use a special kind of correlation metric that is suitable for time series and build a network by connecting the stocks based on their "loss-spreading factor" (how the stocks are correlated, and to how many other stocks they are correlated).
+Stock prices have complex dynamics and their movements depend on many factors from economic, financial, and behavioral aspects of the market and its agents. Our strategy aims to identify correlations between stocks and select the best for a long term investment. In short, we will use a special kind of correlation metric that is suitable for time series and build a network by connecting the stocks based on their "loss-spreading factor" (how the stocks are correlated, and to how many other stocks they are correlated).
 
-Financial time series forecasting is a very complex problem, and Pearson's correlation may not be appropriate to measure the dependencies between the stocks because it detects only linear relations, not to mention that it can have a value equal to zero when the series are dependent\cite{Szekely2007}. We will use the Distance Correlation metric\cite{Szekely2007, Szekely2009}, which is a correlation measure that captures both linear and non-linear relations in the data. From its definition, it also allows time series with different dimmension to be compared but we will study only stocks in the same period in this study. According to \cite{Szekely2007}, the distance covariance is defined as: Let $X, Y$ be two real-valued random variables (vectors) and $(X_1, Y_1), \ldots, (X_n, Y_n)$ be a n-size sample. Then, we first compute the pairwise distances for all $j,k \in \{1, \ldots, n\}$:
+Financial time series forecasting is a very complex problem, and Pearson's correlation may not be appropriate to measure the dependencies between the stocks because it detects only linear relations, not to mention that it can have a value equal to zero when the series are dependent\cite{Szekely2007}. We will use the Distance Correlation metric\cite{Szekely2007, Szekely2009}, which is a correlation measure that captures both linear and non-linear relations in the data. From its definition, it also allows time series with different dimensions to be compared but we will study only stocks in the same period in this study. According to \cite{Szekely2007}, the distance covariance is defined as: Let $X, Y$ be two real-valued random variables (vectors) and $(X_1, Y_1), \ldots, (X_n, Y_n)$ be an n-size sample. Then, we first compute the pairwise distances for all $j,k \in \{1, \ldots, n\}$:
 
 \begin{align}
 a_{j,k} &= \norm{X_j - X_k}\\
@@ -145,7 +147,7 @@ A_{j,k} = a_{j,k} - \bar{a}_{j,\cdot} - \bar{a}_{\cdot,k} + \bar{a}_{\cdot,\cdot
 B_{j,k} = b_{j,k} - \bar{b}_{j,\cdot} - \bar{b}_{\cdot,k} + \bar{b}_{\cdot,\cdot}
 \end{align}
 
-where $\bar{a}_{\cdot,k}$ is the $k$-th columns mean, $\bar{a}_{j,\cdot}$ is the $j$-th row mean and $\bar{a}_{\cdot,\cdot}$ is the total mean. Same notation for matrix $B$. Then, the distance covariance is defined by:
+where $\bar{a}_{\cdot,k}$ are the $k$-th columns mean, $\bar{a}_{j,\cdot}$ are the $j$-th row mean and $\bar{a}_{\cdot,\cdot}$ is the total mean. Same notation for matrix $B$. Then, the distance covariance is defined by:
 
 \begin{equation}
   dCov_n^2(X,Y) := \frac{1}{n^2} \sum_{j=1}^{n}\sum_{k=1}^{n}A_{j,k}B_{j,k}
@@ -171,7 +173,7 @@ where $\rho_D(X_i, Y_j)$ is the distance correlation between time series $X_i$ a
 
 The next step is to create the stock network. For this, we want to represent the stocks with weights that are inversely proportional to the distance correlation. Thus, we use $1-Cor_{ij} \in [0, 1]$ as the similarity matrix that will generate the network weights.
 
-Our strategy will use network theory to identify portfolios that have the minimal systemic risk. Thus, we define our strategy as:
+Our strategy will use network theory to identify portfolios that have minimal systemic risk. Thus, we define our strategy as:
 
 
 \begin{portfoliochoice}
@@ -187,7 +189,7 @@ Our strategy aims to identify portfolios with minimal risk, so that our investme
 We build our network, as described in the previous section, with the similarity matrix defined as $1-Cor_{ij}$. This defined the distance between the nodes in the network. Since we adopted the \emph{Winners-Take-All}\cite{Tse2010} method to control how our stock network is connected, we limited the node distance to a certain threshold of $\rho_c$. Then, we use the \emph{Communicability Betweenness Centrality}\cite{Estrada2009} of the network to measure the portfolio risk. This measure is defined for each node as a fraction between the walks passing through this node and all the possible paths in the network. The more connections the node has the higher its communicability betweenness score. Also, the higher the score, the more the node is capable of spreading its impacts. Formally, following \cite{Estrada2009}:
 
 \begin{communicability}
-Let $G = (V, E)$ be a graph with $n$ nodes and $m$ edges with adjancency matrix $A$. Define $G(r) = (V, E')$ the graph constructed by removing all edges that connect to the node $r$, keeping the node itself. Let $G_{prq}$ represent the number of paths between nodes $p$ and $q$ that passes through the node $r$ and $G_{pq}$ be all possible paths between $p$ and $q$. Then, the communicability betweenness centrality is defined by:
+Let $G = (V, E)$ be a graph with $n$ nodes and $m$ edges with adjacency matrix $A$. Define $G(r) = (V, E')$ the graph constructed by removing all edges that connect to the node $r$, keeping the node itself. Let $G_{prq}$ represent the number of paths between nodes $p$ and $q$ that passes through the node $r$ and $G_{pq}$ be all possible paths between $p$ and $q$. Then, the communicability betweenness centrality is defined by:
 
 \begin{equation}
   \omega_r = \frac{1}{(n-1)(n-2)}\sum_p \sum_q \dfrac{G_{prq}}{G_{pq}}
@@ -204,7 +206,7 @@ In our strategy, we want to allocate our capital inversely proportional to the r
 
 \subsection{Acquisition of the data}
 
-The stock market is regulated by CVM but is operated by the stock exchange \emph{B3}. The historical data is publicly available at the \emph{B3} website\footnote{Available at: \url{http://www.b3.com.br/en_us/market-data-and-indices/data-services/market-data/historical-data/equities/historical-quotes/}}.
+The stock market is regulated by CVM but is operated by the stock exchange \emph{B3}. The historical data is publicly available on the \emph{B3} website\footnote{Available at: \url{http://www.b3.com.br/en_us/market-data-and-indices/data-services/market-data/historical-data/equities/historical-quotes/}}.
 
 \begin{figure}[H]
   \centering
@@ -234,7 +236,7 @@ We collected the historical data for all 330 companies, which may have more than
 
 \begin{enumerate}
   \item Select only stocks that have minimum liquidity. We want our strategy to be freely available to trade the stocks on the portfolio, without incurring in liquidity risk. In this direction, we defined a threshold of average BRL 5.000,00 volume. We exclude most of the stocks in this selection, with $124$ remaining.
-  \item Select only one type of stock per company. This allows us to remove highly correlated stocks because they are from the same company. With exclude 5 additional stocks with this criteria: \emph{BBDC3}, \emph{CMIG3}, \emph{ITUB3}, \emph{LAME3}, and \emph{PETR3}.
+  \item Select only one type of stock per company. This allows us to remove highly correlated stocks because they are from the same company. With exclude 5 additional stocks with these criteria: \emph{BBDC3}, \emph{CMIG3}, \emph{ITUB3}, \emph{LAME3}, and \emph{PETR3}.
   \item We remove stocks with too many missing values.
   \item We remove stocks that aren't connected (using $\rho_c = 0.4$) in the network.
 \end{enumerate}
@@ -248,7 +250,7 @@ For the last part, we did a visual analysis of the networks generated by the sto
   \label{fig:HClose015}
 \end{figure}
 
-For $\rho_c=0.325$, the network still keeps too many connections, as seen on image \ref{fig:HClose0325}.
+For $\rho_c=0.325$, the network still keeps too many connections, as seen in image \ref{fig:HClose0325}.
 
 \begin{figure}[H]
   \centering
@@ -257,7 +259,7 @@ For $\rho_c=0.325$, the network still keeps too many connections, as seen on ima
   \label{fig:HClose0325}
 \end{figure}
 
-Finally, for $\rho=0.4$ we observe that we remove some of the connections and can observe different relations between the stocks. The network can be seen on image \ref{fig:HClose04}.
+Finally, for $\rho=0.4$ we observe that we remove some of the connections and can observe different relations between the stocks. The network can be seen in image \ref{fig:HClose04}.
 
 \begin{figure}[H]
   \centering
@@ -283,7 +285,7 @@ As described above, we use the time series of the $40$ stocks to build a distanc
   \caption*{The total distance matrix is of dimension $40\times40$.}
 \end{table}
 
-Then we build the stock network using the threshold of $\rho_c=0.4$. As seen on image \ref{fig:DegreeHist}, the stocks on this network has an average degree (number of connections) of $9$, and its distribution is skewed right.
+Then we build the stock network using the threshold of $\rho_c=0.4$. As seen in image \ref{fig:DegreeHist}, the stocks on this network have an average degree (number of connections) of $9$, and its distribution is skewed right.
 
 \begin{figure}[H]
   \centering
@@ -298,7 +300,7 @@ With the network built, we can start working on our strategy.
 
 \subsection{Minimal Risk Portfolio}
 
-Similar to the theory of portfolio optimization, we are interested in finding a portfolio with minimum risk. we will call this strategy the Minimal Risk Portfolio (MRP). To this strategy, we start by computing the intra-portfolio risk, so that we can make investment decisions that invest less capital in riskier stocks. To compute the portfolio risk, as mentioned before, we use the \emph{communicability betweenness centrality} measure. We can observe the portfolio risk on image \ref{fig:PortfolioRisk}.
+Similar to the theory of portfolio optimization, we are interested in finding a portfolio with minimum risk. we will call this strategy the Minimal Risk Portfolio (MRP). To this strategy, we start by computing the intra-portfolio risk, so that we can make investment decisions that invest less capital in riskier stocks. To compute the portfolio risk, as mentioned before, we use the \emph{communicability betweenness centrality} measure. We can observe the portfolio risk in image \ref{fig:PortfolioRisk}.
 
 \begin{figure}[H]
   \centering
@@ -309,7 +311,7 @@ Similar to the theory of portfolio optimization, we are interested in finding a 
 
 We read an intra-portfolio risk plot like this: \emph{VALE3} (\emph{Companhia Vale do Rio Doce}) is $\dfrac{0.41}{0.07} = 5.86$ times riskier than \emph{GGBR4} (\emph{Gerdau}), \emph{BBDC4} (\emph{Banco Bradesco}) is $\dfrac{8.33}{1.65} = 5.05$ times riskier than \emph{RENT3} (\emph{Localiza}), ... , and \emph{ITSA4} (\emph{Itaú S.A.}) is $\dfrac{8.59}{0.16} = 53.69$ times riskier than \emph{EMBR3} (\emph{Embraer})!
 
-With this strategy, stocks that are more connected to others (more central in the netork) have the highest susception to impacts. Thus, we will invest the capital based on the inverse of the risk. We will also use a \emph{softmax} function to smoothen the distribution and avoid investing too big a share in the least risky stock. We used a \emph{temperature} value of $1.5$:
+With this strategy, stocks that are more connected to others (more central in the network) have the highest susception to impacts. Thus, we will invest the capital based on the inverse of the risk. We will also use a \emph{softmax} function to smoothen the distribution and avoid investing too big a share in the least risky stock. We used a \emph{temperature} value of $1.5$:
 
 \begin{align}
   \text{w'}_{r} &= \dfrac{1}{\omega_{r} \sum_{r'}\omega_{r'}^{-1}}\\
@@ -336,7 +338,7 @@ Since the number of independent sets can be very large, instead of finding all t
 
 \subsection{Efficient frontier}
 
-The efficient frontier finds the optimal portfolio based on the risk-return associated with the possible portfolios and compare it with a risk-free interest rate. For a rational investor, it would not be advised to invest in a risky portfolio that has expected return less tahn or equal to the risk-free rate. By comparing the expected return of the portfolios with their risk level, measured by the volatility of it's stocks, the rational investor can choose the set of stocks that minimizes the risk (volatility) given a fixed expected return value. As seen on image \ref{fig:efficient_frontier}, there are many combinations of stocks that can form a portfolio, each with its own values of risk and return. The tangent line represents the expected return given by the risk-free rate.
+The efficient frontier finds the optimal portfolio based on the risk-return associated with the possible portfolios and compare it with a risk-free interest rate. For a rational investor, it would not be advised to invest in a risky portfolio that has expected return less than or equal to the risk-free rate. By comparing the expected return of the portfolios with their risk level, measured by the volatility of its stocks, the rational investor can choose the set of stocks that minimizes the risk (volatility) given a fixed expected return value. As seen in image \ref{fig:efficient_frontier}, there are many combinations of stocks that can form a portfolio, each with its own values of risk and return. The tangent line represents the expected return given by the risk-free rate.
 
 \begin{figure}[H]
   \centering
@@ -345,8 +347,9 @@ The efficient frontier finds the optimal portfolio based on the risk-return asso
   \label{fig:efficient_frontier}
 \end{figure}
 
+Portfolios that are below the efficient frontier and concentrated on the right side of the image are sub-optimal because they do not provide sufficient returns for the level of risk and have a higher risk for a certain rate of return. The optimal portfolio, then, is the one that is at the intersection of the tangent line and the set of all possible portfolios.
 
-The optimal portfolio is the one that is in the intersection of the tangent line and the set of all possible portfolios. In our implementations, we used the \emph{Python} package \emph{pypfopt}\footnote{\url{https://github.com/robertmartin8/PyPortfolioOpt}} that has the implementation for the efficient frontier portfolio. We use this portfolio as a benchmark for comparing with our strategies.
+In our implementations, we used the \emph{Python} package \emph{pypfopt}\footnote{\url{https://github.com/robertmartin8/PyPortfolioOpt}} that has the implementation for the efficient frontier portfolio. We use this portfolio as a benchmark for comparing with our strategies.
 
 \section{Backtesting}
 
@@ -364,7 +367,7 @@ We will also compare the returns of these strategies with the historical returns
 
 \begin{itemize}
   \item \emph{Ibovespa}: The benchmark index for the Brazilian market, representing the biggest companies listed on \emph{B3} (currently contains $77$ companies);
-  \item \emph{SMLL index}: Index containg the smaller companies (small cap) (currently contains $90$ companies)
+  \item \emph{SMLL index}: Index containing the smaller companies (small cap) (currently contains $90$ companies)
 \end{itemize}
 
 We have continuous allocation shares for the strategies, and we will use a discrete allocation methodology contained in the \emph{Python} package \emph{pypfopt}\footnote{\url{https://github.com/robertmartin8/PyPortfolioOpt}}. The MRP obtain the following shares distribution:
@@ -409,12 +412,12 @@ And the EF this one:
   \caption*{By allocating multiples of the shares, we obtained the distribution shown above for the EF portfolio. The total invested capital was $9,986.05$.}
 \end{table}
 
-By investing in these portfolios, we can measure the performance in the validation period. The return evolution can be seen on image \ref{fig:TestReturnCovid}.
+By investing in these portfolios, we can measure the performance in the validation period. The return evolution can be seen in image \ref{fig:TestReturnCovid}.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\linewidth, keepaspectratio]{images/test_performance_include_covid19.png}
-  \caption{Returns on validation set}
+  \caption{Returns on the validation set}
   \label{fig:TestReturnCovid}
 \end{figure}
 
@@ -452,12 +455,12 @@ MRP and MIS substantially outperformed both the Ibovespa and SMLL indexes, as we
 
 \section{Visualizing drawdowns}
 
-Illustrated on image \ref{fig:Drawdowns} is the daily rolling 252-day drawdown for MIS (green), MRP (blue), and the Efficient Frontier (salmon) along with the respective rolling maximum drawdowns (solid curves).
+Illustrated in image \ref{fig:Drawdowns} is the daily rolling 252-day drawdown for MIS (green), MRP (blue), and the Efficient Frontier (salmon) along with the respective rolling maximum drawdowns (solid curves).
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\linewidth, keepaspectratio]{images/drawdown.png}
-  \caption{Returns on validation set}
+  \caption{Drawdown plot of the strategies}
   \label{fig:Drawdowns}
 \end{figure}
 
@@ -467,7 +470,7 @@ From this image, we note:
   \item the MRP and MIS portfolios have significantly smaller drawdowns than the Efficient Frontier portfolio;
   \item All portfolios have roughly the same maximum drawdown (around 40-45\%) achieved in the \emph{COVID-19} crisis period; and
   \item MRP rolling maximum drawdowns are, on average, less pronounced than MIS. These results suggest the communicability betweenness centrality has predictive power as a measure of relative or intra-portfolio risk, and more generally, that network-based portfolio construction is a promising alternative to the more radiational approaches like MPT.
-  \item If we disconsider the turbulent period from mid-2018 (many political events in Brazil - arrest of former president Luis Inácio Lula da Silva, presidential elections), we can see that the MRP and MIS shows a much lower drawdown curve.
+  \item If we do not consider the turbulent period from mid-2018 (many political events in Brazil - the arrest of former president Luis Inácio Lula da Silva, presidential elections), we can see that the MRP and MIS shows a much lower drawdown curve.
 \end{enumerate}
 
 
@@ -494,13 +497,13 @@ MRP and MIS outperformed the Efficient Frontier on every metric. Also, we note f
 
 \section{Conclusion remarks}
 
-We designed an algorithm to generate minimum risk portfolio (MRP) asset weights using tools from network science. First, an asset-related statistic is established, and then an appropriate centrality measure is used to extract the asset weight. As an intermediate step, we interpret the centrality score as a measure of relative risk because it captures asset volatility and their impact on the other assets in the network.
+We designed an algorithm to generate a minimum risk portfolio (MRP) asset weights using tools from network science. First, an asset-related statistic is established, and then an appropriate centrality measure is used to extract the asset weight. As an intermediate step, we interpret the centrality score as a measure of relative risk because it captures asset volatility and their impact on the other assets in the network.
 
 In addition, we designed a second strategy by allocating the capital by Maximal Independent Set (MIS). This strategy finds the subset of stocks that guarantee all the stocks in the network are connected. They are the most representative stocks.
 
 Our strategies were compared with the Modern Portfolio Theory portfolio given by the Efficient Frontier (EF) method.
 
-The portfolios were being assessed by cumulative return, rate of return, volatility, maximum withdrawal, risk-adjusted return and risk-adjusted-performance. In all performance indicators, Hedgecra ȅ algorithm is significantly better than the Efficient frontier of the portfolio and market.
+The portfolios were being assessed by cumulative return, rate of return, volatility, maximum withdrawal, risk-adjusted return, and risk-adjusted-performance. In all performance indicators, Hedgecra ȅ algorithm is significantly better than the Efficient frontier of the portfolio and market.
 
 \section{Future work}
 
